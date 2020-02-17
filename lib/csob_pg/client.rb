@@ -91,8 +91,8 @@ module CsobPaymentGateway
         payId: pay_id,
         dttm: timestamp
       }
-      close = Message::Refund.new hash
-      process_message close, :put, Message::GeneralResponse
+      refund = Message::Refund.new hash
+      process_message refund, :put, Message::GeneralResponse
     end
 
     def process_message(message, method, response_klass)

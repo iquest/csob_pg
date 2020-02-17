@@ -1,3 +1,4 @@
 *.gem
 test/config/csob.yml
 .byebug_history
+.idea/*

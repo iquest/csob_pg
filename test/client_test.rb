@@ -3,6 +3,8 @@ require_relative '../lib/csob_pg/client'
 require 'nokogiri'
 
 module CsobPaymentGateway
+  ID_UP_FROM = 10005
+
   class ClientTest < Minitest::Test
     def test_sign_verify_process_works
       str = "ABCD"
@@ -39,7 +41,7 @@ module CsobPaymentGateway
 
     def test_get_url_to_the_gateway
       c = get_client
-      url = c.process_url(init_payment 33)
+      url = c.process_url(init_payment ID_UP_FROM + 1)
 
       redirect = RestClient.get url
       exp = "https://iplatebnibrana.csob.cz/pay/shop.example.com/"
@@ -49,21 +51,21 @@ module CsobPaymentGateway
     def test_get_status_of_initialized_payment
       c = get_client
 
-      r = c.status(init_payment 9)
+      r = c.status(init_payment ID_UP_FROM + 2)
       assert_equal :OK, ResultCodes[r.resultCode]
       assert_equal :payment_initialized, TransactionLifecycle[r.paymentStatus]
     end
 
     def test_invalid_card_payment
       c = get_client
-      pay_no = init_payment 27
+      pay_no = init_payment ID_UP_FROM + 3
       r = process_payment pay_no, CARD_VISA_AUTH_FAILURE
       assert_equal :internal_error, ResultCodes[r.resultCode]
     end
 
     def test_reverse_pending_payment
       c = get_client
-      pay_no = init_payment 315
+      pay_no = init_payment ID_UP_FROM + 4
       r1 = process_payment pay_no
       r2 = c.reverse(pay_no)
       assert_equal :OK, ResultCodes[r1.resultCode], r1.resultMessage
@@ -72,7 +74,7 @@ module CsobPaymentGateway
 
     def test_close_message_works
       c = get_client
-      pay_no = init_payment 60
+      pay_no = init_payment ID_UP_FROM + 5
       r = c.close(pay_no)
       # unable to induce valid state for closing
       assert_equal :payment_not_in_valid_state, ResultCodes[r.resultCode]
@@ -80,7 +82,7 @@ module CsobPaymentGateway
 
     def test_refund_message_works
       c = get_client
-      pay_no = init_payment 70
+      pay_no = init_payment ID_UP_FROM + 6
       r = c.refund(pay_no)
       # unable to induce valid state for refund
       assert_equal :payment_not_in_valid_state, ResultCodes[r.resultCode]
@@ -152,7 +154,7 @@ module CsobPaymentGateway
       Message::GeneralResponse.new params
     end
 
-    def init_payment order_no
+    def init_payment(order_no)
       c = get_client
       item = Message::Item.new name: 'RailsConf', quantity: 1, amount: 2000, description: 'RailsConf'
       r = c.init order_no.to_s, 2000, 'CZK', item, 'CZ'

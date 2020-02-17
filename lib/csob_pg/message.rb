@@ -92,12 +92,14 @@ module CsobPaymentGateway
       attribute :description, Types::Strict::String.constrained(max_size: 40)
     end
 
+    Dry::Types.register('cart.item', Item)
+
     class Cart
       extend Forwardable
       def_delegator :@arr, :length
 
       def initialize(arr)
-        @arr = Types::Array(Item)[arr]
+        @arr = Types::Array('cart.item')[arr]
       end
 
       def to_s
@@ -111,18 +113,20 @@ module CsobPaymentGateway
       end
 
       def self.call_unsafe(*args)
-        arr = Types::Array(Item).call_unsafe *args
+        arr = Types::Array('cart.item').call_unsafe *args
         new arr
       end
 
       def self.meta(*args)
-        Types::Array(Item).meta *args
+        Types::Array('cart.item').meta *args
       end
 
       def to_ary
         @arr
       end
     end
+
+    Dry::Types.register('cart', Cart)
 
     class AbstractMessage < Dry::Struct
       include Signable
@@ -142,8 +146,7 @@ module CsobPaymentGateway
       attribute :closePayment, Types::Bool
       attribute :returnUrl, ReturnUrl
       attribute :returnMethod, ReturnMethod
-
-      attribute :cart, Cart
+      attribute :cart, 'cart'
       attribute :merchantData, MerchantData
       attribute :customerId, CustomerId
       attribute :language, Language
