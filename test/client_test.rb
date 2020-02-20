@@ -122,7 +122,7 @@ module CsobPaymentGateway
       response = follow_redirect redirect
       (0..2).each do
         break if c.status(pay_no).paymentStatus == 7
-        sleep(0.1)
+        sleep(0.25)
       end
       location = response.instance_variable_get(:@header)['location'][0]
       response = get_location location
