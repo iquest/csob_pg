@@ -113,7 +113,7 @@ module CsobPaymentGateway
 
     def get(message)
       url = @url_base + message.get_url(@client_key)
-      RestClient.get url, { accept: :json}
+      RestClient.get url, { accept: :json }
     end
 
     def request(message, method)

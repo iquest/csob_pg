@@ -89,7 +89,7 @@ module CsobPaymentGateway
       attribute :name, Types::Strict::String.constrained(max_size: 20)
       attribute :quantity, Types::Strict::Integer.constrained(gteq: 1)
       attribute :amount, Types::Strict::Integer.constrained(gteq: 0)
-      attribute :description, Types::Strict::String.constrained(max_size: 40)
+      attribute :description, Types::Strict::String.constrained(max_size: 40).constructor{ |string| string.strip }
     end
 
     Dry::Types.register('cart.item', Item)
@@ -99,7 +99,7 @@ module CsobPaymentGateway
       def_delegator :@arr, :length
 
       def initialize(arr)
-        @arr = Types::Array('cart.item')[arr]
+        @arr = Types::Array.of('cart.item')[arr]
       end
 
       def to_s
@@ -113,12 +113,12 @@ module CsobPaymentGateway
       end
 
       def self.call_unsafe(*args)
-        arr = Types::Array('cart.item').call_unsafe *args
+        arr = Types::Array.of('cart.item').call_unsafe *args
         new arr
       end
 
       def self.meta(*args)
-        Types::Array('cart.item').meta *args
+        Types::Array.of('cart.item').meta *args
       end
 
       def to_ary
@@ -136,6 +136,7 @@ module CsobPaymentGateway
       def path
         'payment/init'
       end
+
       attribute :merchantId, Types::Strict::String
       attribute :orderNo, OrderNo
       attribute :dttm, DtTm

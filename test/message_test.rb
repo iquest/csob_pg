@@ -24,6 +24,16 @@ module CsobPaymentGateway
       assert_good good, Message::OrderNo
     end
 
+    def test_description_is_stripped_and_chomped
+      item = Message::Item.new(
+        name: 'RailsConf',
+        quantity: 1,
+        amount: 2000,
+        description: " \nfaulty \r"
+      )
+      assert_equal 'faulty', item.description
+    end
+
     def test_date_format_constraint_works
       good = %w(20000101000000 20190209010101 20200311091010 20290415112222 20510722123737 20680929134545 20731030175151 29991131235959)
       assert_good good, Message::DtTm

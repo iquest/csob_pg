@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
   s.name        = 'csob_pg'
-  s.version     = '0.0.1'
-  s.date        = '2019-12-27'
+  s.version     = '0.0.2'
+  s.date        = '2021-02-04'
   s.summary     = 'Implementation of a client to communicate with the payment gateway operated by ČSOB (Czechoslovak Trade Bank), API v1.8'
   s.authors     = ['Tomáš Milsimer']
   s.email       = 'tomas.milsimer@protonmail.com'
