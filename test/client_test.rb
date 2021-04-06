@@ -156,7 +156,7 @@ module CsobPaymentGateway
 
     def init_payment(order_no)
       c = get_client
-      item = Message::Item.new name: 'RailsConf', quantity: 1, amount: 2000, description: ' RailsConf'
+      item = Message::Item.new name: 'RailsConf ', quantity: 1, amount: 2000, description: ' RailsConf'
       r = c.init order_no.to_s, 2000, 'CZK', item, 'CZ'
       assert_equal :OK, ResultCodes[r.resultCode], r.resultMessage
       assert r.ok?

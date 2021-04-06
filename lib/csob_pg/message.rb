@@ -86,10 +86,10 @@ module CsobPaymentGateway
 
     class Item < Dry::Struct
       include SignaturePart
-      attribute :name, Types::Strict::String.constrained(max_size: 20)
+      attribute :name, Types::Strict::String.constrained(max_size: 20).constructor { |string| string.strip }
       attribute :quantity, Types::Strict::Integer.constrained(gteq: 1)
       attribute :amount, Types::Strict::Integer.constrained(gteq: 0)
-      attribute :description, Types::Strict::String.constrained(max_size: 40).constructor{ |string| string.strip }
+      attribute :description, Types::Strict::String.constrained(max_size: 40).constructor { |string| string.strip }
     end
 
     Dry::Types.register('cart.item', Item)

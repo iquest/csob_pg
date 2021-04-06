@@ -24,13 +24,14 @@ module CsobPaymentGateway
       assert_good good, Message::OrderNo
     end
 
-    def test_description_is_stripped_and_chomped
+    def test_name_and_description_is_stripped_and_chomped
       item = Message::Item.new(
-        name: 'RailsConf',
+        name: ' RailsConf ',
         quantity: 1,
         amount: 2000,
         description: " \nfaulty \r"
       )
+      assert_equal 'RailsConf', item.name
       assert_equal 'faulty', item.description
     end
 
