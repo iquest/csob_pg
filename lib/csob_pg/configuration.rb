@@ -5,11 +5,11 @@ require_relative 'client'
 module CsobPaymentGateway
 
   def self.client
-    @client ||= create_client
+    @client ||= create_client(code)
   end
 
-  def self.create_client
-    conf = configuration_from_rails
+  def self.create_client(code = nil)
+    conf = configuration_from_rails(code)
     Client.new(
       conf.gateway_url,
       conf.return_url,
@@ -35,17 +35,23 @@ module CsobPaymentGateway
     )
   end
 
-  def self.configuration_from_yaml(path, env)
+  def self.configuration_from_yaml(path, env, code = nil)
     erb = ERB.new(File.read(path)).result
     erb.gsub!("\n", "\n\n")
     yaml = YAML.load(erb)
-    configuration(yaml[env])
+    if yaml[env].has_key?(code)
+      configuration(yaml[env][code])
+    elsif yaml[env].has_key?('gateway_url')
+      configuration(yaml[env])
+    else
+      configuration(yaml[env].first)
+    end
   end
 
-  def self.configuration_from_rails
+  def self.configuration_from_rails(code = nil)
     path = ::Rails.root.join('config', 'csob.yml')
     env = ::Rails.env.to_s
-    configuration_from_yaml(path, env) if File.exists?(path)
+    configuration_from_yaml(path, env, code) if File.exists?(path)
   end
 
   class Configuration
