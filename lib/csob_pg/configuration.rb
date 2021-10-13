@@ -4,7 +4,7 @@ require_relative 'client'
 
 module CsobPaymentGateway
 
-  def self.client
+  def self.client(code = nil)
     @client ||= create_client(code)
   end
 
@@ -44,7 +44,7 @@ module CsobPaymentGateway
     elsif yaml[env].has_key?('gateway_url')
       configuration(yaml[env])
     else
-      configuration(yaml[env].first)
+      configuration(yaml[env].values.first)
     end
   end
 
