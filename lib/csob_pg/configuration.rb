@@ -5,8 +5,7 @@ require_relative 'client'
 module CsobPaymentGateway
 
   def self.client(code = nil)
-    @clients ||= {}
-    @clients[code] ||= create_client(code)
+    create_client(code)
   end
 
   def self.create_client(code = nil)
