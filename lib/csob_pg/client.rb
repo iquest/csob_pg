@@ -26,6 +26,7 @@ module CsobPaymentGateway
     end
 
     def init(order_no, total_amount, currency, item, language)
+      Rails.logger.info "CSOB: payment init for #{@merchant_id} order_no #{order_no}"
       cart = [item]
       hash = {
         merchantId: @merchant_id,
