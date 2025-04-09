@@ -11,10 +11,12 @@ module CsobPaymentGateway
     end
 
     module SignaturePart
+      KEYS_FOR_SKIP = [:paymentStatusMessage]
       def to_s
         # We use attribute_names instead of attributes
         # in order to preserve predictable iteration order
         arr = self.class.attribute_names.reduce([]) do |arr, name|
+          next arr if KEYS_FOR_SKIP.include?(name)
           value = attributes[name]
           unless value.nil?
             string = value.to_s
@@ -83,6 +85,7 @@ module CsobPaymentGateway
     ResultCode = Types::Coercible::Integer.enum(*ResultCodes.keys)
     PayId = Types::Strict::String.constrained(size: 15)
     PaymentStatus = Types::Coercible::Integer.enum(*TransactionLifecycle.keys)
+    PaymentStatusMessage = Types::Coercible::Symbol.enum(*TransactionLifecycle.values)
 
     class Item < Dry::Struct
       include SignaturePart
@@ -113,12 +116,12 @@ module CsobPaymentGateway
       end
 
       def self.call_unsafe(*args)
-        arr = Types::Array.of('cart.item').call_unsafe *args
+        arr = Types::Array.of('cart.item').call_unsafe(*args)
         new arr
       end
 
       def self.meta(*args)
-        Types::Array.of('cart.item').meta *args
+        Types::Array.of('cart.item').meta(*args)
       end
 
       def to_ary
@@ -228,9 +231,21 @@ module CsobPaymentGateway
       attribute :resultCode, ResultCode
       attribute :resultMessage, Types::Strict::String
       attribute :paymentStatus, PaymentStatus.meta(omittable: true)
+      attribute :paymentStatusMessage, PaymentStatusMessage.meta(omittable: true)
       attribute :authCode, Types::Strict::String.meta(omittable: true)
       attribute :customerCode, Types::Strict::String.meta(omittable: true)
       attribute :statusDetail, Types::Strict::String.meta(omittable: true)
+
+      def initialize(hash)
+        hash[:paymentStatusMessage] = TransactionLifecycle[hash[:paymentStatus]] if hash[:paymentStatus]
+        super
+      end
+    end
+
+    class ErrorResponse < AbstractResponse
+      attribute :type, Types::Strict::String
+      attribute :resultCode, ResultCode
+      attribute :resultMessage, Types::Strict::String
     end
 
     class EchoResponse < AbstractResponse

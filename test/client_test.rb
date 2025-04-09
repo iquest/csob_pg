@@ -6,17 +6,18 @@ module CsobPaymentGateway
   ID_UP_FROM = 10005
 
   class ClientTest < Minitest::Test
+    # basic tests - crypto
     def test_sign_verify_process_works
       str = "ABCD"
       encoded = Message::Signable.sign_string str, client_key
-      verified = Message::Verifiable.verify_string encoded, str, CLIENT_PUB
+      verified = Message::Verifiable.verify_string encoded, str, client_pub_key
       assert verified
     end
 
     def test_sign_verify_process_works_for_encoded_strings
       str = "ABCD"
       encoded = Message::Signable.sign_encode_string str, client_key
-      verified = Message::Verifiable.decode_verify_string encoded, str, CLIENT_PUB
+      verified = Message::Verifiable.decode_verify_string encoded, str, client_pub_key
       assert verified
     end
 
@@ -24,30 +25,34 @@ module CsobPaymentGateway
       example = CsobPaymentGateway.init_example
       message = Message::Init.new example
       signature = message.signed(client_key)[:signature]
-      assert(Message::Verifiable.decode_verify_string(signature, message.to_s, CLIENT_PUB))
+      assert(Message::Verifiable.decode_verify_string(signature, message.to_s, client_pub_key))
     end
 
     def test_verify_example_response
       example = CsobPaymentGateway.general_response
       response = Message::GeneralResponse.new example
-      assert(response.verify(CLIENT_PUB))
+      assert(response.verify(client_pub_key))
     end
 
+    # gateway tests
+    # echo - https://github.com/csob/platebnibrana/wiki/Z%C3%A1kladn%C3%AD-metody#echo-operation
     def test_echo_message_works
       c = get_client
       r = c.echo
       assert_equal :OK, ResultCodes[r.resultCode]
     end
 
+    # payment/process - https://github.com/csob/platebnibrana/wiki/Z%C3%A1kladn%C3%AD-metody#payment-process-operation
     def test_get_url_to_the_gateway
       c = get_client
-      url = c.process_url(init_payment ID_UP_FROM + 1)
+      url = c.process(init_payment ID_UP_FROM + 1)
 
       redirect = RestClient.get url
       exp = "https://iplatebnibrana.csob.cz/pay/shop.example.com/"
       assert_equal(exp, redirect.request.url[0...exp.length])
     end
 
+    # payment/status - https://github.com/csob/platebnibrana/wiki/Z%C3%A1kladn%C3%AD-metody#payment-status-operation
     def test_get_status_of_initialized_payment
       c = get_client
 
@@ -56,11 +61,11 @@ module CsobPaymentGateway
       assert_equal :payment_initialized, TransactionLifecycle[r.paymentStatus]
     end
 
+    # gateway tests - payment actions
     def test_invalid_card_payment
-      c = get_client
       pay_no = init_payment ID_UP_FROM + 3
       r = process_payment pay_no, CARD_VISA_AUTH_FAILURE
-      assert_equal :internal_error, ResultCodes[r.resultCode]
+      assert_equal :payment_method_error, ResultCodes[r.resultCode]
     end
 
     def test_reverse_pending_payment
@@ -90,7 +95,7 @@ module CsobPaymentGateway
 
     def process_payment(pay_no, cardnumber = CARD_VISA_AUTH_SUCCESS)
       c = get_client
-      url = c.process_url(pay_no)
+      url = c.process(pay_no)
 
       redirect = RestClient.get url
       id = redirect.request.url.split("/").last
@@ -99,18 +104,29 @@ module CsobPaymentGateway
         cardnumber: cardnumber,
         expiry: {
           month: 12,
-          year: 2021
+          year: 2031
         },
         cvc: 353
       }
 
       response = post_json process_url, hash
-      redirect = JSON.parse(response.body)["redirect"]
+      body = JSON.parse(response.body)
+
+      if body["error"]
+        error = body["error"]
+        return Message::ErrorResponse.new({
+          type: error["type"],
+          resultCode: 190,
+          resultMessage: error["html"]
+        })
+      end
+      redirect = body["redirect"]
       response = follow_redirect redirect
       doc = Nokogiri::HTML.parse response.body
+
       form = doc.css("form")[0]
       action = form.attribute("action").value
-      pa_res = form.css("input")[1].attribute("value").value
+      pa_res = form.css("[name=\"cardnumber\"]").attribute("value").value
       md = form.css("input")[2].attribute("value").value
       redirect = {
         "url" => action,
