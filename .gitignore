@@ -1,4 +1,7 @@
 *.gem
 test/config/csob.yml
+test/config/*.key
+test/config/*.pub
 .byebug_history
 .idea/*
+.env.*

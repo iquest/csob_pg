@@ -1,74 +1,79 @@
+require 'dry-struct'
 require 'yaml'
 require 'erb'
 require_relative 'client'
 
 module CsobPaymentGateway
+  Types = Dry.Types()
 
-  def self.client(code = nil)
-    create_client(code)
-  end
+  class << self
+    def configure
+      yield(configuration)
+    end
 
-  def self.create_client(code = nil)
-    conf = configuration_from_rails(code)
-    Client.new(
-      conf.gateway_url,
-      conf.return_url,
-      conf.merchant_id,
-      conf.client_private_key,
-      conf.service_public_key
-    )
-  end
+    def configuration
+      @configuration ||= Configuration.new(
+        gateway_url: gateway_url,
+        return_url: ENV['CSOB_RETURN_URL'] || '',
+        merchant_id: ENV['CSOB_MERCHANT_ID'] || '',
+        client_private_key: ENV['CSOB_CLIENT_PRIVATE_KEY'] || '',
+        service_public_key: ENV['CSOB_SERVICE_PUBLIC_KEY'] || '',
+        client_public_key: ENV['CSOB_CLIENT_PUBLIC_KEY'],
+        logger: nil
+      )
+    end
 
-  def self.configuration(hash)
-    gateway_url = hash['gateway_url']
-    return_url = hash['return_url']
-    merchant_id = hash['merchant_id']
-    client_private_key = hash['client_private_key']
-    service_public_key = hash['service_public_key']
+    def client
+      @client ||= create_client
+    end
 
-    Configuration.new(
-      gateway_url,
-      return_url,
-      merchant_id,
-      client_private_key,
-      service_public_key
-    )
-  end
+    def gateway_url
+      environment = (ENV['CSOB_ENVIRONMENT'] || :production).to_sym
+      version = (ENV['CSOB_VERSION'] || '1.9').to_s
 
-  def self.configuration_from_yaml(path, env, code = nil)
-    erb = ERB.new(File.read(path)).result
-    erb.gsub!("\n", "\n\n")
-    yaml = YAML.load(erb, aliases: true)
-    if yaml[env].has_key?(code)
-      configuration(yaml[env][code])
-    elsif yaml[env].has_key?('gateway_url')
-      configuration(yaml[env])
-    else
-      configuration(yaml[env].values.first)
+      base_url = environment == :production ? "https://api.platebnibrana.csob.cz" : "https://iapi.iplatebnibrana.csob.cz"
+      base_url += case version.to_s
+      when '1.8'
+        '/api/v1.8'
+      when '1.9'
+        '/api/v1.9'
+      else
+        raise "Unsupported API version"
+      end
+    end
+
+    def create_client
+      Client.new(
+        configuration.gateway_url,
+        configuration.return_url,
+        configuration.merchant_id,
+        configuration.client_private_key.gsub('\\n', '\n'),
+        configuration.service_public_key,
+        configuration.client_public_key,
+        configuration.logger
+      )
     end
   end
 
-  def self.configuration_from_rails(code = nil)
-    path = ::Rails.root.join('config', 'csob.yml')
-    env = ::Rails.env.to_s
-    configuration_from_yaml(path, env, code) if File.exist?(path)
-  end
+  class Configuration < Dry::Struct
+    attribute :gateway_url, Types::String
+    attribute :return_url, Types::String
+    attribute :merchant_id, Types::String
+    attribute :client_private_key, Types::String
+    attribute :service_public_key, Types::String
+    attribute :client_public_key, Types::String.optional
+    attribute :logger, Types.Instance(Proc).optional
 
-  class Configuration
-    attr_reader :gateway_url, :return_url, :merchant_id, :client_private_key, :service_public_key
+    attr_writer :gateway_url, :return_url, :merchant_id, :client_private_key, :service_public_key, :client_public_key
 
-    def initialize(
-      gateway_url,
-      return_url,
-      merchant_id,
-      client_private_key,
-      service_public_key
-    )
-      @gateway_url = gateway_url
-      @return_url = return_url
-      @merchant_id = merchant_id
-      @client_private_key = client_private_key
-      @service_public_key = service_public_key
+    def initialize(attributes = {})
+      @logger = nil
+      super(attributes)
+    end
+
+    def logger=(lambda)
+      raise ArgumentError, "The key_name must be a lambda" unless lambda.is_a?(Proc)
+      @logger = lambda
     end
   end
 end
