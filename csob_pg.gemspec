@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 Gem::Specification.new do |s|
   s.name        = 'csob_pg'
   s.version     = '0.0.4'
@@ -10,8 +12,9 @@ Gem::Specification.new do |s|
                    'lib/csob_pg/client.rb',
                    'lib/csob_pg/configuration.rb',
                    'lib/csob_pg.rb']
-   s.add_dependency 'rest-client', '~> 2'
-   s.add_dependency 'dry-struct', '~> 1'
-   s.add_development_dependency 'nokogiri', '~> 1'
-   s.add_development_dependency 'dotenv', '~> 2'
+  s.required_ruby_version = '>= 3.1.0'
+  s.add_dependency 'dry-struct', '~> 1'
+  s.add_dependency 'rest-client', '~> 2'
+  s.add_development_dependency 'dotenv', '~> 2'
+  s.add_development_dependency 'nokogiri', '~> 1'
 end

@@ -1,6 +1,8 @@
+# frozen_string_literal: true
+
 module CsobPaymentGateway
-  ResultCodes = {
-    0   => :OK,
+  RESULT_CODES = {
+    0 => :OK,
     100 => :missing_parameter,
     110 => :invalid_parameter,
     120 => :merchant_blocked,
@@ -26,10 +28,10 @@ module CsobPaymentGateway
     810 => :customer_found_no_saved_card,
     820 => :customer_found_found_saved_card,
     900 => :internal_error,
-    10000 => :application_error
+    10_000 => :application_error
   }.freeze
 
-  TransactionLifecycle = {
+  TRANSACTION_LIFECYCLE = {
     1 => :payment_initialized,
     2 => :payment_in_progress,
     3 => :payment_cancelled,
