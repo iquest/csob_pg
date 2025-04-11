@@ -1,20 +1,23 @@
+# frozen_string_literal: true
+
 require_relative 'message'
 require 'rest-client'
 require 'json'
 
-
 module CsobPaymentGateway
+  # This class is used for creating the client
   class Client
     DEFAULT_PAY_OPERATION = 'payment'
     DEFAULT_PAY_METHOD = 'card'
 
     def initialize(url, return_url, merchant_id, client_key, service_pub, client_pub_key = nil, logger = nil)
-      @url_base = url[-1] == '/' ? url : url + '/'
+      @url_base = url[-1] == '/' ? url : "#{url}/"
       @return_url = return_url
       @merchant_id = merchant_id
       @client_key = OpenSSL::PKey::RSA.new(client_key)
       @client_pub = client_pub_key ? OpenSSL::PKey::RSA.new(client_pub_key) : nil
       @service_pub = OpenSSL::PKey::RSA.new(service_pub)
+      @logger = logger
     end
 
     def echo
@@ -99,17 +102,17 @@ module CsobPaymentGateway
 
     def process_message(message, method, response_klass)
       json = case method
-      when :get
-        get message
-      else
-        request message, method
-      end
+             when :get
+               get message
+             else
+               request message, method
+             end
       build_response json, response_klass
-    rescue => e
+    rescue StandardError => e
       message = e.message
       message = e.response.body if e.respond_to?(:response) && e.response
       hash = {
-        resultCode: 10000,
+        resultCode: 10_000,
         resultMessage: message
       }
       Message::NullResponse.new hash
@@ -117,16 +120,37 @@ module CsobPaymentGateway
 
     def get(message)
       url = @url_base + message.get_url(@client_key)
+
+      @logger&.call&.debug do
+        "Get URL: #{url}\n" \
+        "Get: #{message}"
+      end
+
       response = RestClient.get url, { accept: :json }
+      @logger&.call&.debug do
+        "Get response: #{response.body}"
+      end
       response.body
     end
 
     def request(message, method)
       url = CGI.escapeHTML(@url_base + message.path)
       hash = message.signed(@client_key)
+
+      @logger&.call&.debug do
+        "Request URL: #{url}\n" \
+        "Request: #{hash}"
+      end
+
       case method
       when :post, :put
-        response = RestClient::Request.execute(method: method, url: url, payload: hash.to_json, headers: { content_type: :json, accept: :json })
+        response = RestClient::Request.execute(method: method, url: url, payload: hash.to_json,
+                                               headers: { content_type: :json, accept: :json })
+
+        @logger&.call&.debug do
+          "Request response: #{response.body}"
+        end
+
         response.body
       else
         raise "Method unimplemented: #{method}"
@@ -135,9 +159,10 @@ module CsobPaymentGateway
 
     def build_response(json, klass)
       hash = JSON.parse(json)
-      transformed = hash.transform_keys { |k| k.to_sym }
+      transformed = hash.transform_keys(&:to_sym)
       response = klass.new transformed
-      raise "Response signature invalid" unless verify(response)
+      raise 'Response signature invalid' unless verify(response)
+
       response
     end
 
