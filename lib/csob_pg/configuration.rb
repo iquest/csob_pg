@@ -19,11 +19,11 @@ module CsobPaymentGateway
     def configuration
       @configuration ||= Configuration.new(
         gateway_url: gateway_url,
-        return_url: ENV['CSOB_RETURN_URL'] || '',
-        merchant_id: ENV['CSOB_MERCHANT_ID'] || '',
-        client_private_key: ENV['CSOB_CLIENT_PRIVATE_KEY'] || '',
-        service_public_key: ENV['CSOB_SERVICE_PUBLIC_KEY'] || '',
-        client_public_key: ENV['CSOB_CLIENT_PUBLIC_KEY'],
+        return_url: ENV.fetch('CSOB_RETURN_URL', ''),
+        merchant_id: ENV.fetch('CSOB_MERCHANT_ID', ''),
+        client_private_key: ENV.fetch('CSOB_CLIENT_PRIVATE_KEY', ''),
+        service_public_key: ENV.fetch('CSOB_SERVICE_PUBLIC_KEY', ''),
+        client_public_key: ENV.fetch('CSOB_CLIENT_PUBLIC_KEY', nil),
         logger: nil
       )
     end

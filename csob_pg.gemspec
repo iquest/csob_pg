@@ -3,7 +3,6 @@
 Gem::Specification.new do |s|
   s.name        = 'csob_pg'
   s.version     = '0.0.4'
-  s.date        = '2025-04-08'
   s.summary     = 'Implementation of a client to communicate with the payment gateway operated by ČSOB (Czechoslovak Trade Bank), API v1.9'
   s.authors     = ['iQuest s.r.o.']
   s.email       = 'info@iquest.cz'
@@ -14,7 +13,9 @@ Gem::Specification.new do |s|
                    'lib/csob_pg.rb']
   s.required_ruby_version = '>= 3.1.0'
   s.add_dependency 'dry-struct', '~> 1'
-  s.add_dependency 'rest-client', '~> 2'
+  s.add_dependency 'net-http', '~> 0.6'
+  s.add_dependency 'uri', '~> 0.10'
   s.add_development_dependency 'dotenv', '~> 2'
   s.add_development_dependency 'nokogiri', '~> 1'
+  s.metadata['rubygems_mfa_required'] = 'true'
 end

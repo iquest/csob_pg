@@ -261,7 +261,7 @@ module CsobPaymentGateway
 
       def initialize(hash)
         hash[:paymentStatusMessage] = TRANSACTION_LIFECYCLE[hash[:paymentStatus]] if hash[:paymentStatus]
-        super(hash)
+        super
       end
     end
 
