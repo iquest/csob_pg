@@ -72,15 +72,14 @@ module CsobPaymentGateway
       assert_equal :payment_method_error, RESULT_CODES[r.resultCode]
     end
 
-    # FIXME - this test is not working
-    # def test_reverse_pending_payment
-    #   c = create_client
-    #   pay_no = init_payment ID_UP_FROM + 4
-    #   r1 = process_payment pay_no
-    #   r2 = c.reverse(pay_no)
-    #   assert_equal :OK, RESULT_CODES[r1.resultCode], r1.resultMessage
-    #   assert_equal :OK, RESULT_CODES[r2.resultCode], r2.resultMessage
-    # end
+    def test_reverse_pending_payment
+      c = create_client
+      pay_no = init_payment ID_UP_FROM + 4
+      r1 = process_payment pay_no
+      r2 = c.reverse(pay_no)
+      assert_equal :OK, RESULT_CODES[r1.resultCode], r1.resultMessage
+      assert_equal :OK, RESULT_CODES[r2.resultCode], r2.resultMessage
+    end
 
     def test_close_message_works
       c = create_client
@@ -125,55 +124,25 @@ module CsobPaymentGateway
                                             resultMessage: error['html']
                                           })
       end
-      redirect = body['redirect']
-      response = follow_redirect redirect
-      doc = Nokogiri::HTML.parse response.body
 
-      form = doc.css('form')[0]
-      action = form.attribute('action').value
-      pa_res = form.css('[name="cardnumber"]').attribute('value').value
-      md = form.css('input')[2].attribute('value').value
-      redirect = {
-        'url' => action,
-        'vars' => {
-          'PaRes' => pa_res,
-          'MD' => md
-        }
-      }
-      response = follow_redirect redirect
       3.times do
         break if c.status(pay_no).paymentStatus == 7
 
         sleep(0.25)
       end
-      location = response.instance_variable_get(:@header)['location'][0]
-      response = get_location location
-      doc = Nokogiri::HTML.parse(response.body)
-      form = doc.css('form')[0]
-      params = if form && form.xpath('//*[@name="payId"]').length.positive?
-                 pay_id = form.xpath('//*[@name="payId"]')[0].attribute('value').value
-                 dttm = form.xpath('//*[@name="dttm"]')[0].attribute('value').value
-                 result_code = form.xpath('//*[@name="resultCode"]')[0].attribute('value').value
-                 result_message = form.xpath('//*[@name="resultMessage"]')[0].attribute('value').value
-                 payment_status = form.xpath('//*[@name="paymentStatus"]')[0].attribute('value').value
-                 signature = form.xpath('//*[@name="signature"]')[0].attribute('value').value
-                 auth_code = form.xpath('//*[@name="authCode"]')[0].attribute('value').value
-                 {
-                   payId: pay_id,
-                   dttm: dttm,
-                   resultCode: result_code,
-                   resultMessage: result_message,
-                   paymentStatus: payment_status,
-                   signature: signature,
-                   authCode: auth_code
-                 }
-               else
-                 return_url = doc.css('a')[0].attribute('href').value
-                 CGI.parse(return_url.split('?').last).to_h do |k, v|
-                   [k.to_sym, v[0]]
-                 end
-               end
-      Message::GeneralResponse.new params
+
+      payment = c.status(pay_no)
+      Message::GeneralResponse.new({
+        payId: payment.payId,
+        dttm: payment.dttm,
+        resultCode: payment.resultCode,
+        resultMessage: payment.resultMessage,
+        paymentStatus: payment.paymentStatus,
+        paymentStatusMessage: payment.paymentStatusMessage,
+        authCode: payment.authCode,
+        customerCode: payment.customerCode,
+        statusDetail: payment.statusDetail
+      })
     end
 
     def init_payment(order_no)

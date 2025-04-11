@@ -256,8 +256,8 @@ module CsobPaymentGateway
       attribute :paymentStatus, PaymentStatus.meta(omittable: true)
       attribute :paymentStatusMessage, PaymentStatusMessage.meta(omittable: true)
       attribute :authCode, Types::Strict::String.meta(omittable: true)
-      attribute :customerCode, Types::Strict::String.meta(omittable: true)
-      attribute :statusDetail, Types::Strict::String.meta(omittable: true)
+      attribute :customerCode, Types::Strict::String.meta(omittable: true).optional
+      attribute :statusDetail, Types::Strict::String.meta(omittable: true).optional
 
       def initialize(hash)
         hash[:paymentStatusMessage] = TRANSACTION_LIFECYCLE[hash[:paymentStatus]] if hash[:paymentStatus]
