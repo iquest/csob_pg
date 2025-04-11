@@ -148,7 +148,7 @@ module CsobPaymentGateway
     def init_payment(order_no)
       c = create_client
       item = Message::Item.new name: 'RailsConf ', quantity: 1, amount: 2000, description: ' RailsConf'
-      r = c.init order_no.to_s, 2000, 'CZK', item, 'CZ'
+      r = c.init(order_no: order_no.to_s, total_amount: 2000, items: [item])
       assert_equal :OK, RESULT_CODES[r.resultCode], r.resultMessage
       assert r.ok?
       assert_equal :payment_initialized, TRANSACTION_LIFECYCLE[r.paymentStatus]

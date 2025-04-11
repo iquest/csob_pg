@@ -67,7 +67,7 @@ item = CsobPaymentGateway::Message::Item.new(
     description: "Payment for service"
   )
 
-payment = client.init(order_number_string, amount, "CZK", item, "CZ")
+payment = client.init(order_no: order_number_string, total_amount: amount, items: [item])
 
 # id of the payment
 pay_id = payment.payId

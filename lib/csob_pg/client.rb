@@ -29,8 +29,12 @@ module CsobPaymentGateway
       process_message echo, :post, Message::EchoResponse
     end
 
-    def init(order_no, total_amount, currency, item, language)
-      cart = [item]
+    def init(order_no:, total_amount:, currency: 'CZK', items:, language: 'CZ', **options)
+      if items.length > 2
+        raise ArgumentError, 'Max 2 items are allowed'
+      end
+
+      cart = items
       hash = {
         merchantId: @merchant_id,
         orderNo: order_no,
@@ -44,7 +48,7 @@ module CsobPaymentGateway
         returnMethod: 'POST',
         cart: cart,
         language: language
-      }
+      }.merge(options)
       init = Message::Init.new hash
       process_message init, :post, Message::GeneralResponse
     end
