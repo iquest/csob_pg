@@ -45,7 +45,7 @@ CsobPaymentGateway.configure do |config|
   config.merchant_id = 'your_merchant_id'
   config.client_private_key = '-----BEGIN RSA PRIVATE KEY-----xxxxx-----END RSA PRIVATE KEY-----'
   config.service_public_key = "-----BEGIN PUBLIC KEY-----xxxxx-----END PUBLIC KEY-----"
-  config.logger = -> { Logger.new(STDOUT) } # Optional, use for debugging
+  # config.logger = -> { Logger.new(STDOUT) } # Optional, use for debugging
 end
 
 # Or by ENV variables

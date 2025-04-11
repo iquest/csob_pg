@@ -96,11 +96,11 @@ end
 
 def create_client
   CsobPaymentGateway.configure do |config|
-    config.return_url = ENV['RETURN_URL']
-    config.merchant_id = ENV['MERCHANT_ID']
-    config.client_private_key = ENV['CLIENT_PRIVATE_KEY']
-    config.service_public_key = ENV['SERVICE_PUBLIC_KEY']
-    config.client_public_key = ENV['CLIENT_PUBLIC_KEY']
+    config.return_url = ENV.fetch('RETURN_URL', nil)
+    config.merchant_id = ENV.fetch('MERCHANT_ID', nil)
+    config.client_private_key = ENV.fetch('CLIENT_PRIVATE_KEY', nil)
+    config.service_public_key = ENV.fetch('SERVICE_PUBLIC_KEY', nil)
+    config.client_public_key = ENV.fetch('CLIENT_PUBLIC_KEY', nil)
     # config.logger = -> { Logger.new(STDOUT) }
   end
   CsobPaymentGateway.client

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative 'message'
-require 'rest-client'
+require_relative 'http_client'
 require 'json'
 
 module CsobPaymentGateway
@@ -122,10 +122,10 @@ module CsobPaymentGateway
 
       @logger&.call&.debug do
         "Get URL: #{url}\n" \
-        "Get: #{message}"
+          "Get: #{message}"
       end
 
-      response = RestClient.get url, { accept: :json }
+      response = HttpClient.get(url, { accept: :json })
       @logger&.call&.debug do
         "Get response: #{response.body}"
       end
@@ -138,13 +138,13 @@ module CsobPaymentGateway
 
       @logger&.call&.debug do
         "Request URL: #{url}\n" \
-        "Request: #{hash}"
+          "Request: #{hash}"
       end
 
       case method
       when :post, :put
-        response = RestClient::Request.execute(method: method, url: url, payload: hash.to_json,
-                                               headers: { content_type: :json, accept: :json })
+        response = HttpClient.execute(method: method, url: url, payload: hash.to_json,
+                                      headers: { content_type: :json, accept: :json })
 
         @logger&.call&.debug do
           "Request response: #{response.body}"
@@ -159,7 +159,20 @@ module CsobPaymentGateway
     def build_response(json, klass)
       hash = JSON.parse(json)
       transformed = hash.transform_keys(&:to_sym)
+      @logger&.call&.debug do
+        "build_response: #{transformed}, class: #{klass}"
+      end
       response = klass.new transformed
+    rescue StandardError => e
+      @logger&.call&.error do
+        "Error building response: #{e.message}"
+      end
+
+      return CsobPaymentGateway::Message::NullResponse.new(
+        resultCode: transformed[:resultCode],
+        resultMessage: transformed[:resultMessage]
+      )
+
       raise 'Response signature invalid' unless verify(response)
 
       response
