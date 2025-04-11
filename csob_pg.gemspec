@@ -6,6 +6,8 @@ Gem::Specification.new do |s|
   s.summary     = 'Implementation of a client to communicate with the payment gateway operated by ČSOB (Czechoslovak Trade Bank), API v1.9'
   s.authors     = ['iQuest s.r.o.']
   s.email       = 'info@iquest.cz'
+  s.licenses    = ['MIT']
+  s.homepage    = 'https://github.com/iquest/csob_pg'
   s.files       = ['lib/csob_pg/constants.rb',
                    'lib/csob_pg/message.rb',
                    'lib/csob_pg/client.rb',

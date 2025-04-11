@@ -28,7 +28,9 @@ module CsobPaymentGateway
             array << string unless string.empty?
           end
         end
-        arr.join(SEP)
+        out = arr.join(SEP)
+        @logger&.call&.debug("Message: #{out}")
+        out
       end
     end
 
@@ -85,8 +87,8 @@ module CsobPaymentGateway
     ReturnUrl = Types::Strict::String.constrained(max_size: 300)
     ReturnMethod = Types::String.enum('POST', 'GET')
     Base64 = Types::Strict::String.constrained(format: %r{^[A-Za-z0-9+/]+={,2}$})
-    MerchantData = Base64.constrained(max_size: 255).meta(omittable: true)
-    CustomerId = Types::Strict::String.constrained(max_size: 50).meta(omittable: true)
+    MerchantData = Base64.constrained(max_size: 255)
+    CustomerId = Types::Strict::String.constrained(max_size: 50)
     Language = Types::String.enum('CZ', 'EN', 'DE', 'FR', 'HU', 'IT', 'JP', 'PL', 'PT', 'RO', 'RU', 'SK', 'ES', 'TR',
                                   'VN', 'HR', 'SI')
     ResultCode = Types::Coercible::Integer.enum(*RESULT_CODES.keys)
@@ -100,8 +102,7 @@ module CsobPaymentGateway
       attribute(:name, Types::Strict::String.constrained(max_size: 20).constructor(&:strip))
       attribute :quantity, Types::Strict::Integer.constrained(gteq: 1)
       attribute :amount, Types::Strict::Integer.constrained(gteq: 0)
-      attribute(:description,
-                Types::Strict::String.constrained(max_size: 40).constructor(&:strip).meta(omittable: true).optional)
+      attribute(:description?, Types::Strict::String.constrained(max_size: 40).constructor(&:strip))
     end
 
     Dry::Types.register('cart.item', Item)
@@ -113,7 +114,7 @@ module CsobPaymentGateway
       def_delegator :@arr, :length
 
       def initialize(arr)
-        @arr = Types::Array.of('cart.item')[arr]
+        @arr = Types::Array('cart.item')[arr]
       end
 
       def to_s
@@ -127,12 +128,12 @@ module CsobPaymentGateway
       end
 
       def self.call_unsafe(*args)
-        arr = Types::Array.of('cart.item').call_unsafe(*args)
+        arr = Types::Array('cart.item').call_unsafe(*args)
         new arr
       end
 
       def self.meta(*args)
-        Types::Array.of('cart.item').meta(*args)
+        Types::Array('cart.item').meta(*args)
       end
 
       def to_ary
@@ -164,15 +165,19 @@ module CsobPaymentGateway
       attribute :returnUrl, ReturnUrl
       attribute :returnMethod, ReturnMethod
       attribute :cart, Cart
-      attribute :customer, Types::Hash.meta(omittable: true)
-      attribute :order, Types::Hash.meta(omittable: true)
-      attribute :merchantData, MerchantData
-      attribute :customerId, CustomerId
+      attribute :customer?, Types::Hash
+      attribute :order?, Types::Hash
+      attribute :merchantData?, MerchantData
+      attribute :customerId?, CustomerId
       attribute :language, Language
-      attribute :ttlSec, Types::Integer.meta(omittable: true).constrained(gteq: 300, lteq: 1800)
-      attribute :logoVersion, Types::Integer.meta(omittable: true)
-      attribute :colorSchemeVersion, Types::Integer.meta(omittable: true)
-      attribute :customExpiry, DtTm.meta(omittable: true)
+      attribute :ttlSec?, Types::Integer.constrained(gteq: 300, lteq: 1800)
+      attribute :logoVersion?, Types::Integer
+      attribute :colorSchemeVersion?, Types::Integer
+      attribute :customExpiry?, DtTm
+
+      def customer=(value)
+        @customer = JSON.stringify(value)
+      end
     end
 
     # This class is used for all messages as a base class
@@ -219,7 +224,7 @@ module CsobPaymentGateway
       def path
         'payment/close'
       end
-      attribute :amount, Types::Integer.meta(omittable: true)
+      attribute :amount?, Types::Integer
     end
 
     # This class is used for refund request
@@ -227,7 +232,7 @@ module CsobPaymentGateway
       def path
         'payment/refund'
       end
-      attribute :amount, Types::Integer.meta(omittable: true)
+      attribute :amount?, Types::Integer
     end
 
     # This class is used for echo request
@@ -242,7 +247,7 @@ module CsobPaymentGateway
     # This class is used for all responses as a base class
     class AbstractResponse < Dry::Struct
       include Verifiable
-      attribute :signature, Base64.meta(omittable: true)
+      attribute :signature?, Base64
       attr_reader :signature
 
       def initialize(hash)
@@ -261,11 +266,11 @@ module CsobPaymentGateway
       attribute :dttm, DtTm
       attribute :resultCode, ResultCode
       attribute :resultMessage, Types::Strict::String
-      attribute :paymentStatus, PaymentStatus.meta(omittable: true)
-      attribute :paymentStatusMessage, PaymentStatusMessage.meta(omittable: true)
-      attribute :authCode, Types::Strict::String.meta(omittable: true)
-      attribute :customerCode, Types::Strict::String.meta(omittable: true).optional
-      attribute :statusDetail, Types::Strict::String.meta(omittable: true).optional
+      attribute :paymentStatus?, PaymentStatus
+      attribute :paymentStatusMessage?, PaymentStatusMessage
+      attribute :authCode?, Types::Strict::String
+      attribute :customerCode?, Types::Strict::String
+      attribute :statusDetail?, Types::Strict::String
 
       def initialize(hash)
         hash[:paymentStatusMessage] = TRANSACTION_LIFECYCLE[hash[:paymentStatus]] if hash[:paymentStatus]
