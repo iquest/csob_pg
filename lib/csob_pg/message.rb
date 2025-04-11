@@ -100,13 +100,15 @@ module CsobPaymentGateway
       attribute(:name, Types::Strict::String.constrained(max_size: 20).constructor(&:strip))
       attribute :quantity, Types::Strict::Integer.constrained(gteq: 1)
       attribute :amount, Types::Strict::Integer.constrained(gteq: 0)
-      attribute(:description, Types::Strict::String.constrained(max_size: 40).constructor(&:strip).meta(omittable: true).optional)
+      attribute(:description,
+                Types::Strict::String.constrained(max_size: 40).constructor(&:strip).meta(omittable: true).optional)
     end
 
     Dry::Types.register('cart.item', Item)
 
     # This class is used for cart
     class Cart
+      # FIXME: How to remove this dependency?
       extend Forwardable
       def_delegator :@arr, :length
 
@@ -156,20 +158,26 @@ module CsobPaymentGateway
       attribute :dttm, DtTm
       attribute :payOperation, PayOperation
       attribute :payMethod, PayMethod
-      attribute :totalAmount, 'integer'
+      attribute :totalAmount, Types::Strict::Integer
       attribute :currency, Currency
       attribute :closePayment, Types::Bool
       attribute :returnUrl, ReturnUrl
       attribute :returnMethod, ReturnMethod
-      attribute :cart, 'cart'
+      attribute :cart, Cart
+      attribute :customer, Types::Hash.meta(omittable: true)
+      attribute :order, Types::Hash.meta(omittable: true)
       attribute :merchantData, MerchantData
       attribute :customerId, CustomerId
       attribute :language, Language
+      attribute :ttlSec, Types::Integer.meta(omittable: true).constrained(gteq: 300, lteq: 1800)
+      attribute :logoVersion, Types::Integer.meta(omittable: true)
+      attribute :colorSchemeVersion, Types::Integer.meta(omittable: true)
+      attribute :customExpiry, DtTm.meta(omittable: true)
     end
 
     # This class is used for all messages as a base class
     class GeneralMessage < AbstractMessage
-      attribute :merchantId, 'string'
+      attribute :merchantId, Types::Strict::String
       attribute :payId, PayId
       attribute :dttm, DtTm
     end
@@ -227,7 +235,7 @@ module CsobPaymentGateway
       def path
         'echo'
       end
-      attribute :merchantId, 'string'
+      attribute :merchantId, Types::Strict::String
       attribute :dttm, DtTm
     end
 
@@ -277,7 +285,6 @@ module CsobPaymentGateway
       attribute :dttm, DtTm
       attribute :resultCode, ResultCode
       attribute :resultMessage, Types::Strict::String
-      attribute :signature, Message::Base64
     end
 
     # This class is used when the response is not a valid JSON

@@ -29,10 +29,8 @@ module CsobPaymentGateway
       process_message echo, :post, Message::EchoResponse
     end
 
-    def init(order_no:, total_amount:, currency: 'CZK', items:, language: 'CZ', **options)
-      if items.length > 2
-        raise ArgumentError, 'Max 2 items are allowed'
-      end
+    def init(order_no:, total_amount:, items:, currency: 'CZK', language: 'CZ', **options)
+      raise ArgumentError, 'Max 2 items are allowed' if items.length > 2
 
       cart = items
       hash = {
@@ -167,19 +165,18 @@ module CsobPaymentGateway
         "build_response: #{transformed}, class: #{klass}"
       end
       response = klass.new transformed
+      raise 'Response signature invalid' unless verify(response)
+
+      response
     rescue StandardError => e
       @logger&.call&.error do
         "Error building response: #{e.message}"
       end
 
-      return CsobPaymentGateway::Message::NullResponse.new(
+      CsobPaymentGateway::Message::NullResponse.new(
         resultCode: transformed[:resultCode],
         resultMessage: transformed[:resultMessage]
       )
-
-      raise 'Response signature invalid' unless verify(response)
-
-      response
     end
 
     def verify(response)

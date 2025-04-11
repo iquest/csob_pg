@@ -13,6 +13,7 @@ module CsobPaymentGateway
       str = 'ABCD'
       encoded = Message::Signable.sign_string str, client_key
       verified = Message::Verifiable.verify_string encoded, str, client_pub_key
+
       assert verified
     end
 
@@ -20,6 +21,7 @@ module CsobPaymentGateway
       str = 'ABCD'
       encoded = Message::Signable.sign_encode_string str, client_key
       verified = Message::Verifiable.decode_verify_string encoded, str, client_pub_key
+
       assert verified
     end
 
@@ -27,12 +29,14 @@ module CsobPaymentGateway
       example = CsobPaymentGateway.init_example
       message = Message::Init.new example
       signature = message.signed(client_key)[:signature]
+
       assert(Message::Verifiable.decode_verify_string(signature, message.to_s, client_pub_key))
     end
 
     def test_verify_example_response
       example = CsobPaymentGateway.general_response
       response = Message::GeneralResponse.new example
+
       assert(response.verify(client_pub_key))
     end
 
@@ -41,6 +45,7 @@ module CsobPaymentGateway
     def test_echo_message_works
       c = create_client
       r = c.echo
+
       assert_equal :OK, RESULT_CODES[r.resultCode]
     end
 
@@ -53,6 +58,7 @@ module CsobPaymentGateway
       redirect = response['location']
 
       exp = 'https://iplatebnibrana.csob.cz/pay/shop.example.com/'
+
       assert_equal(exp, redirect[0...exp.length])
     end
 
@@ -61,6 +67,7 @@ module CsobPaymentGateway
       c = create_client
       payment_no = init_payment(ID_UP_FROM + 2)
       r = c.status(payment_no)
+
       assert_equal :OK, RESULT_CODES[r.resultCode]
       assert_equal :payment_initialized, TRANSACTION_LIFECYCLE[r.paymentStatus]
     end
@@ -69,6 +76,7 @@ module CsobPaymentGateway
     def test_invalid_card_payment
       pay_no = init_payment ID_UP_FROM + 3
       r = process_payment pay_no, CARD_VISA_AUTH_FAILURE
+
       assert_equal :payment_method_error, RESULT_CODES[r.resultCode]
     end
 
@@ -77,6 +85,7 @@ module CsobPaymentGateway
       pay_no = init_payment ID_UP_FROM + 4
       r1 = process_payment pay_no
       r2 = c.reverse(pay_no)
+
       assert_equal :OK, RESULT_CODES[r1.resultCode], r1.resultMessage
       assert_equal :OK, RESULT_CODES[r2.resultCode], r2.resultMessage
     end
@@ -149,8 +158,9 @@ module CsobPaymentGateway
       c = create_client
       item = Message::Item.new name: 'RailsConf ', quantity: 1, amount: 2000, description: ' RailsConf'
       r = c.init(order_no: order_no.to_s, total_amount: 2000, items: [item])
+
       assert_equal :OK, RESULT_CODES[r.resultCode], r.resultMessage
-      assert r.ok?
+      assert_predicate r, :ok?
       assert_equal :payment_initialized, TRANSACTION_LIFECYCLE[r.paymentStatus]
       r.payId
     end

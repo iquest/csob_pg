@@ -10,6 +10,7 @@ Gem::Specification.new do |s|
                    'lib/csob_pg/message.rb',
                    'lib/csob_pg/client.rb',
                    'lib/csob_pg/configuration.rb',
+                   'lib/csob_pg/http_client.rb',
                    'lib/csob_pg.rb']
   s.required_ruby_version = '>= 3.1.0'
   s.add_dependency 'dry-struct', '~> 1'
