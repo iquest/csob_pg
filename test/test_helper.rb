@@ -38,6 +38,7 @@ module CsobPaymentGateway
     hsh.transform_keys(&:to_sym)
   end
 
+  # rubocop:disable Metrics/MethodLength
   def self.init_example
     {
       merchantId: '012345',
@@ -68,6 +69,7 @@ module CsobPaymentGateway
       language: 'CZ'
     }
   end
+  # rubocop:enable Metrics/MethodLength
 
   def self.general_example
     {
@@ -78,6 +80,7 @@ module CsobPaymentGateway
     }
   end
 
+  # rubocop:disable Metrics/MethodLength
   def self.general_response
     hash = {
       payId: 'd165e3c4b624fBD',
@@ -92,6 +95,7 @@ module CsobPaymentGateway
     hash[:signature] = signature
     hash
   end
+  # rubocop:enable Metrics/MethodLength
 end
 
 def create_client

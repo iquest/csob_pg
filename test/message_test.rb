@@ -4,6 +4,7 @@ require_relative 'test_helper'
 require_relative '../lib/csob_pg/message'
 
 module CsobPaymentGateway
+  # rubocop:disable Metrics/ClassLength
   class MessageTest < Minitest::Test
     def assert_good(arr, type)
       arr.all? do |string|
@@ -12,7 +13,7 @@ module CsobPaymentGateway
     end
 
     def assert_bad(string, type)
-      e = assert_raises do
+      e = assert_raises(Dry::Types::ConstraintError) do
         type[string]
       end
       exp = "\"#{string}\" violates constraints"
@@ -39,6 +40,7 @@ module CsobPaymentGateway
       assert_equal 'faulty', item.description
     end
 
+    # rubocop:disable Minitest/MultipleAssertions
     def test_date_format_constraint_works
       good = %w[20000101000000 20190209010101 20200311091010 20290415112222 20510722123737 20680929134545
                 20731030175151 29991131235959]
@@ -59,6 +61,7 @@ module CsobPaymentGateway
       # second out of range
       assert_bad '20200715235960', Message::DtTm
     end
+    # rubocop:enable Minitest/MultipleAssertions
 
     def test_pay_operation_enum_constraint_works
       good = %w[payment oneclickPayment customPayment]
@@ -104,8 +107,11 @@ module CsobPaymentGateway
       assert_bad too_long, Message::MerchantData
     end
 
+    # rubocop:disable Metrics/AbcSize
+    # rubocop:disable Metrics/MethodLength
+    # rubocop:disable Minitest/MultipleAssertions
     def test_response_from_json
-      success = '{"payId":"d165e3c4b624fBD","dttm":"20190925131559","resultCode":0,"resultMessage":"OK","paymentStatus":1,"signature":"ABCD"}'
+      success = '{"payId":"d165e3c4b624fBD","dttm":"20190925131559","resultCode":0,"resultMessage":"OK","paymentStatus":1,"signature":"ABCD"}' # rubocop:disable Layout/LineLength
       hash = CsobPaymentGateway.symbolize_keys(JSON.parse(success))
       m = Message::GeneralResponse.new hash
 
@@ -119,7 +125,13 @@ module CsobPaymentGateway
       assert_nil(m.customerCode)
       assert_nil(m.statusDetail)
     end
+    # rubocop:enable Metrics/AbcSize
+    # rubocop:enable Metrics/MethodLength
+    # rubocop:enable Minitest/MultipleAssertions
 
+    # rubocop:disable Metrics/AbcSize
+    # rubocop:disable Metrics/MethodLength
+    # rubocop:disable Minitest/MultipleAssertions
     def test_init_message_from_example
       example = CsobPaymentGateway.init_example
       m = Message::Init.new example
@@ -139,6 +151,9 @@ module CsobPaymentGateway
 
       assert_equal example, h
     end
+    # rubocop:enable Metrics/AbcSize
+    # rubocop:enable Metrics/MethodLength
+    # rubocop:enable Minitest/MultipleAssertions
 
     def test_integer_coercion_works_for_response
       data = {
@@ -154,6 +169,8 @@ module CsobPaymentGateway
       assert_predicate msg, :ok?
     end
 
+    # rubocop:disable Metrics/MethodLength
+    # rubocop:disable Minitest/MultipleAssertions
     def test_ok_method_works
       r = Message::EchoResponse.new(
         dttm: '20200312213050',
@@ -201,5 +218,8 @@ module CsobPaymentGateway
 
       refute_predicate r, :ok?
     end
+    # rubocop:enable Metrics/MethodLength
+    # rubocop:enable Minitest/MultipleAssertions
   end
+  # rubocop:enable Metrics/ClassLength
 end

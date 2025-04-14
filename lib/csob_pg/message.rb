@@ -16,6 +16,7 @@ module CsobPaymentGateway
     # This module is used for creating the signature
     module SignaturePart
       KEYS_FOR_SKIP = [:paymentStatusMessage].freeze
+      # rubocop:disable Metrics/MethodLength
       def to_s
         # We use attribute_names instead of attributes
         # in order to preserve predictable iteration order
@@ -32,6 +33,7 @@ module CsobPaymentGateway
         @logger&.call&.debug("Message: #{out}")
         out
       end
+      # rubocop:enable Metrics/MethodLength
     end
 
     # This module is used for signing the message
@@ -106,6 +108,7 @@ module CsobPaymentGateway
       attribute(:description?, Types::Strict::String.constrained(max_size: 40).constructor(&:strip))
     end
 
+    # This class is used for address
     class Address < Dry::Struct
       include SignaturePart
       attribute :address1, Types::Strict::String.constrained(max_size: 50).constructor(&:strip)
@@ -117,6 +120,7 @@ module CsobPaymentGateway
       attribute :country, Types::Strict::String.constrained(format: /^[A-Z]{3}$/).constructor(&:strip) # 3166-1 alpha-3
     end
 
+    # This class is used for account
     class Account < Dry::Struct
       include SignaturePart
       attribute :createdAt?, Types::Strict::String.constrained(format: DATE_ISO_FORMAT).constructor(&:strip)
@@ -129,6 +133,7 @@ module CsobPaymentGateway
       attribute :suspicious?, Types::Strict::Bool
     end
 
+    # This class is used for gift card
     class GiftCard < Dry::Struct
       include SignaturePart
       attribute :totalAmount?, Types::Strict::Integer
@@ -136,6 +141,7 @@ module CsobPaymentGateway
       attribute :quantity?, Types::Strict::Integer.constrained(gteq: 1, lteq: 99)
     end
 
+    # This class is used for login
     class Login < Dry::Struct
       include SignaturePart
       attribute :auth?,
@@ -145,6 +151,7 @@ module CsobPaymentGateway
       attribute :authData?, Types::Strict::String
     end
 
+    # This class is used for customer
     class Customer < Dry::Struct
       include SignaturePart
       attribute :name?, Types::Strict::String.constrained(max_size: 45).constructor(&:strip)
@@ -157,6 +164,7 @@ module CsobPaymentGateway
       attribute :login?, Login
     end
 
+    # This class is used for order
     class Order < Dry::Struct
       include SignaturePart
       attribute :type?, Types::Strict::String.enum('purchase', 'balance', 'prepaid', 'cash', 'check')

@@ -32,6 +32,7 @@ module CsobPaymentGateway
       @client ||= create_client
     end
 
+    # rubocop:disable Metrics/MethodLength
     def gateway_url
       environment = (ENV['CSOB_ENVIRONMENT'] || :production).to_sym
       version = (ENV['CSOB_VERSION'] || '1.9').to_s
@@ -47,6 +48,7 @@ module CsobPaymentGateway
                   end
       base_url
     end
+    # rubocop:enable Metrics/MethodLength
 
     def create_client
       Client.new(
