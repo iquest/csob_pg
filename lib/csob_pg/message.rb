@@ -79,6 +79,7 @@ module CsobPaymentGateway
 
     Types = Dry.Types()
     DATE_FORMAT = /^2[0-9]{3}(0[1-9]|1[0-2])(0[1-9]|[12][0-9]|3[01])([01][0-9]|2[0-3])[0-5][0-9][0-5][0-9]$/
+    DATE_ISO_FORMAT = /^2[0-9]{3}-0[1-9]-0[1-9]T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/
     OrderNo = Types::Strict::String.constrained(format: /^\d{1,10}$/)
     DtTm = Types::Strict::String.constrained(format: DATE_FORMAT)
     PayOperation = Types::String.enum('payment', 'oneclickPayment', 'customPayment')
@@ -103,6 +104,76 @@ module CsobPaymentGateway
       attribute :quantity, Types::Strict::Integer.constrained(gteq: 1)
       attribute :amount, Types::Strict::Integer.constrained(gteq: 0)
       attribute(:description?, Types::Strict::String.constrained(max_size: 40).constructor(&:strip))
+    end
+
+    class Address < Dry::Struct
+      include SignaturePart
+      attribute :address1, Types::Strict::String.constrained(max_size: 50).constructor(&:strip)
+      attribute :address2?, Types::Strict::String.constrained(max_size: 50).constructor(&:strip)
+      attribute :address3?, Types::Strict::String.constrained(max_size: 50).constructor(&:strip)
+      attribute :city, Types::Strict::String.constrained(max_size: 50).constructor(&:strip)
+      attribute :zip, Types::Strict::String.constrained(max_size: 16).constructor(&:strip)
+      attribute :state?, Types::Strict::String.constrained(max_size: 50).constructor(&:strip) # 3166-2
+      attribute :country, Types::Strict::String.constrained(format: /^[A-Z]{3}$/).constructor(&:strip) # 3166-1 alpha-3
+    end
+
+    class Account < Dry::Struct
+      include SignaturePart
+      attribute :createdAt?, Types::Strict::String.constrained(format: DATE_ISO_FORMAT).constructor(&:strip)
+      attribute :changedAt?, Types::Strict::String.constrained(format: DATE_ISO_FORMAT).constructor(&:strip)
+      attribute :changedPwdAt?, Types::Strict::String.constrained(format: DATE_ISO_FORMAT).constructor(&:strip)
+      attribute :orderHistory?, Types::Strict::Integer.constrained(gteq: 0, lteq: 9999)
+      attribute :paymentsDay?, Types::Strict::Integer.constrained(gteq: 0, lteq: 999)
+      attribute :paymentsYear?, Types::Strict::Integer.constrained(gteq: 0, lteq: 999)
+      attribute :oneclickAdds?, Types::Strict::Integer.constrained(gteq: 0, lteq: 999)
+      attribute :suspicious?, Types::Strict::Bool
+    end
+
+    class GiftCard < Dry::Struct
+      include SignaturePart
+      attribute :totalAmount?, Types::Strict::Integer
+      attribute :currency?, Types::Strict::String.enum('CZK', 'EUR', 'USD', 'GBP', 'HUF', 'PLN', 'RON', 'NOK', 'SEK')
+      attribute :quantity?, Types::Strict::Integer.constrained(gteq: 1, lteq: 99)
+    end
+
+    class Login < Dry::Struct
+      include SignaturePart
+      attribute :auth?,
+                Types::Strict::String.enum('guest', 'account', 'federated', 'issuer', 'thirdparty', 'fido',
+                                           'fido_signed', 'api')
+      attribute :authAt?, Types::Strict::String.constrained(format: DATE_ISO_FORMAT).constructor(&:strip)
+      attribute :authData?, Types::Strict::String
+    end
+
+    class Customer < Dry::Struct
+      include SignaturePart
+      attribute :name?, Types::Strict::String.constrained(max_size: 45).constructor(&:strip)
+      attribute :email?, Types::Strict::String.constrained(max_size: 100).constructor(&:strip)
+      attribute :homePhone?, Types::Strict::String.constrained(format: /^\+[+0-9.]+\.[+0-9.]+$/).constructor(&:strip)
+      attribute :workPhone?, Types::Strict::String.constrained(format: /^\+[+0-9.]+\.[+0-9.]+$/).constructor(&:strip)
+      attribute :mobilePhone?,
+                Types::Strict::String.constrained(format: /^\+[+0-9.]+\.[+0-9.]+$/).constructor(&:strip)
+      attribute :account?, Account
+      attribute :login?, Login
+    end
+
+    class Order < Dry::Struct
+      include SignaturePart
+      attribute :type?, Types::Strict::String.enum('purchase', 'balance', 'prepaid', 'cash', 'check')
+      attribute :availability?,
+                Types::Hash.map(Types::Strict::String.enum('now', 'preorder'),
+                                Types::Strict::String.constrained(format: /^\d{4}-\d{2}-\d{2}$/))
+      attribute :delivery?,
+                Types::Strict::String.enum('shipping', 'shipping_verified', 'instore', 'digital', 'ticket', 'other')
+      attribute :deliveryMode?, Types::Strict::Integer.enum(0, 1, 2, 3)
+      attribute :deliveryEmail?, Types::Strict::String.constrained(max_size: 100).constructor(&:strip)
+      attribute :nameMatch?, Types::Strict::Bool
+      attribute :addressMatch?, Types::Strict::Bool
+      attribute :billing?, Address
+      attribute :shipping?, Address
+      attribute :shippingAddedAt?, Types::Strict::String.constrained(format: DATE_ISO_FORMAT).constructor(&:strip)
+      attribute :reorder?, Types::Strict::Bool
+      attribute :giftcards?, GiftCard
     end
 
     Dry::Types.register('cart.item', Item)
@@ -165,8 +236,8 @@ module CsobPaymentGateway
       attribute :returnUrl, ReturnUrl
       attribute :returnMethod, ReturnMethod
       attribute :cart, Cart
-      attribute :customer?, Types::Hash
-      attribute :order?, Types::Hash
+      attribute :customer?, Customer
+      attribute :order?, Order
       attribute :merchantData?, MerchantData
       attribute :customerId?, CustomerId
       attribute :language, Language
@@ -174,10 +245,6 @@ module CsobPaymentGateway
       attribute :logoVersion?, Types::Integer
       attribute :colorSchemeVersion?, Types::Integer
       attribute :customExpiry?, DtTm
-
-      def customer=(value)
-        @customer = JSON.stringify(value)
-      end
     end
 
     # This class is used for all messages as a base class
