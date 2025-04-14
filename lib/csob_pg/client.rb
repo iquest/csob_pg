@@ -6,10 +6,12 @@ require 'json'
 
 module CsobPaymentGateway
   # This class is used for creating the client
+  # rubocop:disable Metrics/ClassLength
   class Client
     DEFAULT_PAY_OPERATION = 'payment'
     DEFAULT_PAY_METHOD = 'card'
 
+    # rubocop:disable Metrics/ParameterLists
     def initialize(url, return_url, merchant_id, client_key, service_pub, client_pub_key = nil, logger = nil)
       @url_base = url[-1] == '/' ? url : "#{url}/"
       @return_url = return_url
@@ -28,7 +30,10 @@ module CsobPaymentGateway
       echo = Message::Echo.new hash
       process_message echo, :post, Message::EchoResponse
     end
+    # rubocop:enable Metrics/ParameterLists
 
+    # rubocop:disable Metrics/MethodLength
+    # rubocop:disable Metrics/ParameterLists
     def init(order_no:, total_amount:, items:, currency: 'CZK', language: 'CZ', **options)
       raise ArgumentError, 'Max 2 items are allowed' if items.length > 2
 
@@ -50,6 +55,8 @@ module CsobPaymentGateway
       init = Message::Init.new hash
       process_message init, :post, Message::GeneralResponse
     end
+    # rubocop:enable Metrics/MethodLength
+    # rubocop:enable Metrics/ParameterLists
 
     def process(pay_id)
       hash = {
@@ -101,6 +108,7 @@ module CsobPaymentGateway
       process_message refund, :put, Message::GeneralResponse
     end
 
+    # rubocop:disable Metrics/MethodLength
     def process_message(message, method, response_klass)
       json = case method
              when :get
@@ -118,6 +126,7 @@ module CsobPaymentGateway
       }
       Message::NullResponse.new hash
     end
+    # rubocop:enable Metrics/MethodLength
 
     def get(message)
       url = @url_base + message.get_url(@client_key)
@@ -134,6 +143,7 @@ module CsobPaymentGateway
       response.body
     end
 
+    # rubocop:disable Metrics/MethodLength
     def request(message, method)
       url = CGI.escapeHTML(@url_base + message.path)
       hash = message.signed(@client_key)
@@ -157,7 +167,10 @@ module CsobPaymentGateway
         raise "Method unimplemented: #{method}"
       end
     end
+    # rubocop:enable Metrics/MethodLength
 
+    # rubocop:disable Metrics/CyclomaticComplexity
+    # rubocop:disable Metrics/MethodLength
     def build_response(json, klass)
       hash = JSON.parse(json)
       transformed = hash.transform_keys(&:to_sym)
@@ -178,6 +191,8 @@ module CsobPaymentGateway
         resultMessage: transformed[:resultMessage]
       )
     end
+    # rubocop:enable Metrics/CyclomaticComplexity
+    # rubocop:enable Metrics/MethodLength
 
     def verify(response)
       response.verify(@service_pub)
@@ -187,4 +202,5 @@ module CsobPaymentGateway
       Message.timestamp(DateTime.now)
     end
   end
+  # rubocop:enable Metrics/ClassLength
 end

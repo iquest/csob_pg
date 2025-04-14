@@ -7,6 +7,7 @@ require 'nokogiri'
 module CsobPaymentGateway
   ID_UP_FROM = 10_005
 
+  # rubocop:disable Metrics/ClassLength
   class ClientTest < Minitest::Test
     # basic tests - crypto
     def test_sign_verify_process_works
@@ -63,6 +64,7 @@ module CsobPaymentGateway
     end
 
     # payment/init with addition params
+    # rubocop:disable Metrics/MethodLength
     def test_get_status_of_initialized_payment_with_additional_params
       client = create_client
       payment_no = init_payment(ID_UP_FROM + 2,
@@ -85,6 +87,7 @@ module CsobPaymentGateway
       assert_equal :OK, RESULT_CODES[response.resultCode]
       assert_equal :payment_initialized, TRANSACTION_LIFECYCLE[response.paymentStatus]
     end
+    # rubocop:enable Metrics/MethodLength
 
     # payment/status - https://github.com/csob/platebnibrana/wiki/Z%C3%A1kladn%C3%AD-metody#payment-status-operation
     def test_get_status_of_initialized_payment
@@ -130,6 +133,8 @@ module CsobPaymentGateway
       assert_equal :payment_not_in_valid_state, RESULT_CODES[response.resultCode]
     end
 
+    # rubocop:disable Metrics/AbcSize
+    # rubocop:disable Metrics/MethodLength
     def process_payment(pay_no, cardnumber = CARD_VISA_AUTH_SUCCESS)
       client = create_client
       url = client.process(pay_no)
@@ -177,6 +182,8 @@ module CsobPaymentGateway
                                      statusDetail: payment.statusDetail
                                    })
     end
+    # rubocop:enable Metrics/AbcSize
+    # rubocop:enable Metrics/MethodLength
 
     def init_payment(order_no, **options)
       client = create_client
@@ -216,4 +223,5 @@ module CsobPaymentGateway
       post_form uri, redirect['vars']
     end
   end
+  # rubocop:enable Metrics/ClassLength
 end

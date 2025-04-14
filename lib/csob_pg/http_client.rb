@@ -13,6 +13,10 @@ module CsobPaymentGateway
         execute(method: :get, url: url, payload: nil, headers: headers)
       end
 
+      # rubocop:disable Metrics/AbcSize
+      # rubocop:disable Metrics/CyclomaticComplexity
+      # rubocop:disable Metrics/MethodLength
+      # rubocop:disable Metrics/PerceivedComplexity
       def execute(method:, url:, payload:, headers: {})
         logger = CsobPaymentGateway.configuration.logger
         logger&.call&.debug("HTTP #{method.upcase} request to #{url}")
@@ -42,6 +46,10 @@ module CsobPaymentGateway
 
         http.request(request)
       end
+      # rubocop:enable Metrics/AbcSize
+      # rubocop:enable Metrics/CyclomaticComplexity
+      # rubocop:enable Metrics/MethodLength
+      # rubocop:enable Metrics/PerceivedComplexity
     end
   end
 end
