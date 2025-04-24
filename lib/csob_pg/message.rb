@@ -243,7 +243,7 @@ module CsobPaymentGateway
       attribute :closePayment, Types::Bool
       attribute :returnUrl, ReturnUrl
       attribute :returnMethod, ReturnMethod
-      attribute :cart, Cart
+      attribute :cart, 'cart'
       attribute :customer?, Customer
       attribute :order?, Order
       attribute :merchantData?, MerchantData
