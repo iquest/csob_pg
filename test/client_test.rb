@@ -5,8 +5,6 @@ require_relative '../lib/csob_pg/client'
 require 'nokogiri'
 
 module CsobPaymentGateway
-  ID_UP_FROM = 10_005
-
   # rubocop:disable Metrics/ClassLength
   class ClientTest < Minitest::Test
     # basic tests - crypto
@@ -53,7 +51,7 @@ module CsobPaymentGateway
     # payment/process - https://github.com/csob/platebnibrana/wiki/Z%C3%A1kladn%C3%AD-metody#payment-process-operation
     def test_get_url_to_the_gateway
       client = create_client
-      url = client.process(init_payment(ID_UP_FROM + 1))
+      url = client.process(init_payment(Minitest.seed + 1))
 
       response = HttpClient.get url
       redirect = response['location']
@@ -67,7 +65,7 @@ module CsobPaymentGateway
     # rubocop:disable Metrics/MethodLength
     def test_get_status_of_initialized_payment_with_additional_params
       client = create_client
-      payment_no = init_payment(ID_UP_FROM + 2,
+      payment_no = init_payment(Minitest.seed + 2,
                                 customer: {
                                   account: {
                                     orderHistory: 3,
@@ -92,7 +90,7 @@ module CsobPaymentGateway
     # payment/status - https://github.com/csob/platebnibrana/wiki/Z%C3%A1kladn%C3%AD-metody#payment-status-operation
     def test_get_status_of_initialized_payment
       client = create_client
-      payment_no = init_payment(ID_UP_FROM + 2)
+      payment_no = init_payment(Minitest.seed + 2)
       response = client.status(payment_no)
 
       assert_equal :OK, RESULT_CODES[response.resultCode]
@@ -101,7 +99,7 @@ module CsobPaymentGateway
 
     # gateway tests - payment actions
     def test_invalid_card_payment
-      pay_no = init_payment ID_UP_FROM + 3
+      pay_no = init_payment Minitest.seed + 3
       response = process_payment pay_no, CARD_VISA_AUTH_FAILURE
 
       assert_equal :payment_method_error, RESULT_CODES[response.resultCode]
@@ -109,7 +107,7 @@ module CsobPaymentGateway
 
     def test_reverse_pending_payment
       client = create_client
-      pay_no = init_payment ID_UP_FROM + 4
+      pay_no = init_payment Minitest.seed + 4
       process_response = process_payment pay_no
       reverse_response = client.reverse(pay_no)
 
@@ -119,7 +117,7 @@ module CsobPaymentGateway
 
     def test_close_message_works
       client = create_client
-      pay_no = init_payment ID_UP_FROM + 5
+      pay_no = init_payment Minitest.seed + 5
       response = client.close(pay_no)
       # unable to induce valid state for closing
       assert_equal :payment_not_in_valid_state, RESULT_CODES[response.resultCode]
@@ -127,7 +125,7 @@ module CsobPaymentGateway
 
     def test_refund_message_works
       client = create_client
-      pay_no = init_payment ID_UP_FROM + 6
+      pay_no = init_payment Minitest.seed + 6
       response = client.refund(pay_no)
       # unable to induce valid state for refund
       assert_equal :payment_not_in_valid_state, RESULT_CODES[response.resultCode]
@@ -177,9 +175,7 @@ module CsobPaymentGateway
                                      resultMessage: payment.resultMessage,
                                      paymentStatus: payment.paymentStatus,
                                      paymentStatusMessage: payment.paymentStatusMessage,
-                                     authCode: payment.authCode,
-                                     customerCode: payment.customerCode,
-                                     statusDetail: payment.statusDetail
+                                     authCode: payment.authCode
                                    })
     end
     # rubocop:enable Metrics/AbcSize
