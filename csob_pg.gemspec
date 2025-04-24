@@ -19,6 +19,7 @@ Gem::Specification.new do |s|
                    'lib/csob_pg/http_client.rb',
                    'lib/csob_pg.rb']
   s.required_ruby_version = '>= 3.1.0'
+  s.add_dependency 'base64', '~> 0.1'
   s.add_dependency 'dry-struct', '~> 1'
   s.add_dependency 'net-http', '~> 0.6'
   s.add_dependency 'uri', '~> 0.10'

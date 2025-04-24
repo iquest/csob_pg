@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require 'dry-struct'
-require 'forwardable'
 require 'base64'
 require_relative 'constants'
 
@@ -15,8 +14,11 @@ module CsobPaymentGateway
 
     # This module is used for creating the signature
     module SignaturePart
-      KEYS_FOR_SKIP = [:paymentStatusMessage].freeze
+      KEYS_FOR_SKIP = %i[paymentStatusMessage signature].freeze
       # rubocop:disable Metrics/MethodLength
+      # rubocop:disable Metrics/AbcSize
+      # rubocop:disable Metrics/CyclomaticComplexity
+      # rubocop:disable Metrics/PerceivedComplexity
       def to_s
         # We use attribute_names instead of attributes
         # in order to preserve predictable iteration order
@@ -24,16 +26,23 @@ module CsobPaymentGateway
           next array if KEYS_FOR_SKIP.include?(name)
 
           value = attributes[name]
-          unless value.nil?
-            string = value.to_s
-            array << string unless string.empty?
-          end
+
+          next if value.nil?
+
+          # if value is an array, map all elements to string and join with SEP
+          value = value.map(&:to_s).join(SEP) if value.is_a?(Array)
+
+          string = value.to_s
+          array << string unless string.empty?
         end
         out = arr.join(SEP)
         @logger&.call&.debug("Message: #{out}")
         out
       end
       # rubocop:enable Metrics/MethodLength
+      # rubocop:enable Metrics/AbcSize
+      # rubocop:enable Metrics/CyclomaticComplexity
+      # rubocop:enable Metrics/PerceivedComplexity
     end
 
     # This module is used for signing the message
@@ -186,42 +195,6 @@ module CsobPaymentGateway
 
     Dry::Types.register('cart.item', Item)
 
-    # This class is used for cart
-    class Cart
-      # FIXME: How to remove this dependency?
-      extend Forwardable
-      def_delegator :@arr, :length
-
-      def initialize(arr)
-        @arr = Types::Array('cart.item')[arr]
-      end
-
-      def to_s
-        return '' if @arr.empty?
-
-        arr = @arr.each_with_object([]) do |item, array|
-          string = item.to_s
-          array << string unless string.empty?
-        end
-        arr.join(SEP)
-      end
-
-      def self.call_unsafe(*args)
-        arr = Types::Array('cart.item').call_unsafe(*args)
-        new arr
-      end
-
-      def self.meta(*args)
-        Types::Array('cart.item').meta(*args)
-      end
-
-      def to_ary
-        @arr
-      end
-    end
-
-    Dry::Types.register('cart', Cart)
-
     # This class is used as a base class for all messages
     class AbstractMessage < Dry::Struct
       include Signable
@@ -243,7 +216,7 @@ module CsobPaymentGateway
       attribute :closePayment, Types::Bool
       attribute :returnUrl, ReturnUrl
       attribute :returnMethod, ReturnMethod
-      attribute :cart, 'cart'
+      attribute :cart, Types::Array.of(Item)
       attribute :customer?, Customer
       attribute :order?, Order
       attribute :merchantData?, MerchantData
@@ -323,12 +296,6 @@ module CsobPaymentGateway
     class AbstractResponse < Dry::Struct
       include Verifiable
       attribute :signature?, Base64
-      attr_reader :signature
-
-      def initialize(hash)
-        @signature = hash.delete(:signature)
-        super
-      end
 
       def ok?
         RESULT_CODES[resultCode] == :OK
