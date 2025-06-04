@@ -2,7 +2,7 @@
 
 Gem::Specification.new do |s|
   s.name        = 'csob_pg'
-  s.version     = '0.0.4'
+  s.version     = '0.0.5'
   s.summary     = 'Implementation of a client for payment gateway operated by ČSOB (Czechoslovak Trade Bank)'
   s.description =  <<~DESCRIPTION
     Implementation of a client to communicate with the payment gateway operated
@@ -19,9 +19,9 @@ Gem::Specification.new do |s|
                    'lib/csob_pg/http_client.rb',
                    'lib/csob_pg.rb']
   s.required_ruby_version = '>= 3.1.0'
-  s.add_dependency 'base64', '~> 0.1'
+  s.add_dependency 'base64', '~> 0.3'
   s.add_dependency 'dry-struct', '~> 1'
   s.add_dependency 'net-http', '~> 0.6'
-  s.add_dependency 'uri', '~> 0.10'
+  s.add_dependency 'uri', '~> 1'
   s.metadata['rubygems_mfa_required'] = 'true'
 end
