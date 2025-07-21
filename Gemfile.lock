@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    csob_pg (0.0.6)
+    csob_pg (0.0.7)
       base64 (~> 0.3)
       dry-struct (~> 1)
       net-http (~> 0.6)

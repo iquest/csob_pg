@@ -2,7 +2,7 @@
 
 Gem::Specification.new do |s|
   s.name        = 'csob_pg'
-  s.version     = '0.0.6'
+  s.version     = '0.0.7'
   s.summary     = 'Implementation of a client for payment gateway operated by ČSOB (Czechoslovak Trade Bank)'
   s.description =  <<~DESCRIPTION
     Implementation of a client to communicate with the payment gateway operated
