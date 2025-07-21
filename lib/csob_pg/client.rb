@@ -12,7 +12,7 @@ module CsobPaymentGateway
     DEFAULT_PAY_METHOD = 'card'
 
     # rubocop:disable Metrics/ParameterLists
-    def initialize(url, return_url, merchant_id, client_key, service_pub, client_pub_key = nil, logger = nil)
+    def initialize(url:, return_url:, merchant_id:, client_key:, service_pub:, client_pub_key: nil, logger: nil)
       @url_base = url[-1] == '/' ? url : "#{url}/"
       @return_url = return_url
       @merchant_id = merchant_id

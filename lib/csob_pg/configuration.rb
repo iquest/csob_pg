@@ -28,8 +28,8 @@ module CsobPaymentGateway
       )
     end
 
-    def client
-      @client ||= create_client
+    def client(**args)
+      @client ||= create_client(**args)
     end
 
     # rubocop:disable Metrics/MethodLength
@@ -50,15 +50,15 @@ module CsobPaymentGateway
     end
     # rubocop:enable Metrics/MethodLength
 
-    def create_client
+    def create_client(return_url: nil, merchant_id: nil, client_key: nil, client_pub_key: nil)
       Client.new(
-        configuration.gateway_url,
-        configuration.return_url,
-        configuration.merchant_id,
-        configuration.client_private_key.gsub('\\n', '\n'),
-        configuration.service_public_key,
-        configuration.client_public_key,
-        configuration.logger
+        url: configuration.gateway_url,
+        return_url: return_url || configuration.return_url,
+        merchant_id: merchant_id || configuration.merchant_id,
+        client_key: client_key || configuration.client_private_key.gsub('\\n', '\n'),
+        service_pub: configuration.service_public_key,
+        client_pub_key: client_pub_key || configuration.client_public_key,
+        logger: configuration.logger
       )
     end
   end
