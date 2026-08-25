@@ -51,7 +51,7 @@ module CsobPaymentGateway
   def self.configuration_from_rails(code = nil)
     path = ::Rails.root.join('config', 'csob.yml')
     env = ::Rails.env.to_s
-    configuration_from_yaml(path, env, code) if File.exists?(path)
+    configuration_from_yaml(path, env, code) if File.exist?(path)
   end
 
   class Configuration
