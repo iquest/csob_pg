@@ -38,7 +38,7 @@ module CsobPaymentGateway
   def self.configuration_from_yaml(path, env, code = nil)
     erb = ERB.new(File.read(path)).result
     erb.gsub!("\n", "\n\n")
-    yaml = YAML.load(erb)
+    yaml = YAML.load(erb, aliases: true)
     if yaml[env].has_key?(code)
       configuration(yaml[env][code])
     elsif yaml[env].has_key?('gateway_url')
